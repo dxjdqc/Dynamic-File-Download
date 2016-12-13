@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Foodpanda coding Challenge</title>
+		<script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="functions.js"></script>
+	</head>
+	<body>
+		<h3> Foodpanda coding Challenge </h3>
+		<button id="bt_load-the-page">Display</button>
+		<button id="btnDownload">Download</button>
+		<div id="siteloader"></div>​
+		<div id="container"></div>
+		<script>
+		/* Date: December 10th, 2016
+		   Name: functions.js
+		   Description: this ccontains functions to disply and download dat from url
+		*/
+
+		// This is the global variable which stores the data downloaded
+			var countryData = [];
+
+		 // For cross domain applications
+			$.ajaxPrefilter( function (options) {
+			  if (options.crossDomain && jQuery.support.cors) {
+				var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
+				options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
+				//options.url = "http://cors.corsproxy.io/url=" + options.url;
+			  }
+			});
+			// download the data and form as table and display
+			$("#bt_load-the-page").on("click",function(){
+				var request = $.ajax({
+					url: "http://pastebin.com/raw/943PQQ0n",
+					method: "GET",
+				});
+
+				request.done(function( msg ) {
+					countryData = parseData(msg);
+					var tbl = '<table border="1" align="left" bgcolor="Azure"><tr><th>Code</th><th> Name </th></tr>'
+					var ks = msg.split("\n");
+					$.each(ks, function(k){
+						if(k >3){
+							var rowData = ks[k].split(/\s+/);
+							tbl = tbl + '<tr><td>'+ rowData[0] + '</td><td>' + rowData[1] + '</td></tr>'
+						}
+					});
+					tbl = tbl + '</table>'
+					$("#siteloader").html(tbl);
+				});
+				request.fail(function( jqXHR, textStatus ) {
+					alert( "Request failed: " + textStatus );
+				});
+			});
+
+		//Downloading the data as CSV
+			$("#btnDownload").on("click",function(){
+
+				ConvertToCSV(countryData)
+			});
+
+			function ConvertToCSV(JSONData) {
+			  //Parsing the data as JSON data
+			  var arrData = typeof JSONData != 'object' ? JSON.parse(JSONData) : JSONData;
+			  var CSV = '';
+
+			  //1st loop is to extract each row
+			  for (var i = 0; i < arrData.length; i++) {
+				  var row = "";
+				  //2nd loop will extract each column and convert it in string comma-seprated
+				  for (var index in arrData[i]) {
+					  row += '"' + arrData[i][index] + '",';
+				  }
+
+				  row.slice(0, row.length - 1);
+				  //add a line break after each row
+				  CSV += row + '\r\n';
+			  }
+
+			  if (CSV == '') {
+				  alert("Invalid data");
+				  return;
+			  }
+			  //Generate a file name
+			  var fileName = "Countries";
+
+			  //Initialize file format you want csv or xls
+			  var uri = 'data:text/csv;charset=utf-8,' + escape(CSV);
+
+			  var link = document.createElement("a");
+			  link.href = uri;
+
+			  //set the visibility hidden so it will not effect on your web-layout
+			  link.style = "visibility:hidden";
+			  link.download = fileName + ".csv";
+
+			  //this part will append the anchor tag and remove it after automatic click
+			  document.body.appendChild(link);
+			  link.click();
+			  document.body.removeChild(link);
+			}
+
+			function  parseData(data){
+			  var formattedData = [];
+			  var ks = data.split("\n");
+			   $.each(ks, function(k){
+				if(k >3){
+				  var rowData = ks[k].split(/\s+/);
+				  var country = {
+					code : rowData[0],
+					name : rowData[1]
+				  }
+				  formattedData.push(country);
+				}
+			  });
+
+			  return formattedData;
+			}
+		//End of the functions
+		</script>
+	</body>
+</html>
